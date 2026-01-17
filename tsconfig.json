@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    
+    /* Strictness */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Library Specific */
+    "declaration": true,           // Generates .d.ts files
+    "declarationMap": true,        // Allows users to jump to source code
+    "sourceMap": true,             // Debugging support
+    "outDir": "./dist",
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* React Support */
+    "jsx": "react-jsx"             // Important for the useSignal hooks
+  },
+  "include": ["src", "tests/signals.test.ts", "tests/resource.test.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "bench"]
+}
