@@ -1,12 +1,33 @@
+# 🚀 Nabd Core
+
+A lightweight, high-performance reactivity engine designed for Fintech applications. Built for precision, speed, and safety.
+
+# ✨ Features
+
+1.  Fine-Grained Reactivity: Updates only what changes—no more unnecessary re-renders.
+2.  Atomic Transactions: Native action and batch support for consistent state.
+3.  Bank-Grade Safety: Integrated withReversion for atomic optimistic UI rollbacks.
+4.  React Ready: Seamless integration with useSignal and useSyncExternalStore.
+5.  Type Safe: 100% TypeScript with first-class IDE support.
+
+# 📦 Installation
+
+```Bash
+
+npm install nabd
+# or
+yarn add nabd
+```
+
 # Quick Start Guide
 
-## 1. Create your first "Store"
+1. Create your first "Store"
 
 Instead of putting state inside components, create a dedicated file for your domain logic. This makes the state shareable and easy to test.
 
 ```typescript
 // stores/counterStore.ts
-import { signal, computed, action, asReadonly } from '@your-org/reactive-signals';
+import { signal, computed, action, asReadonly } from "nabd";
 
 // 1. Private state (cannot be modified outside this file)
 const _count = signal(0);
@@ -19,22 +40,23 @@ export const doubleCount = computed(() => _count.get() * 2);
 
 // 4. Actions (Logic with automatic batching)
 export const increment = action(() => {
-  _count.update(n => n + 1);
+  _count.update((n) => n + 1);
 });
 
 export const reset = action(() => {
   _count.set(0);
 });
+```
+
 2. Connect to a React Component
-Use the useSignal hook to "peek" into the store. React will handle the subscription and unsubscription automatically.
+   Use the useSignal hook to "peek" into the store. React will handle the subscription and unsubscription automatically.
 
-
-
+```typescript
 // components/Counter.tsx
-'use client'; // Required for Next.js App Router
+"use client"; // Required for Next.js App Router
 
-import { useSignal } from '@your-org/reactive-signals/react';
-import { count, doubleCount, increment } from '../stores/counterStore';
+import { useSignal } from "nabd/react";
+import { count, doubleCount, increment } from "../stores/counterStore";
 
 export default function Counter() {
   // Component re-renders ONLY when count changes
@@ -49,12 +71,14 @@ export default function Counter() {
     </div>
   );
 }
+```
+
 3. Handle Async Data (The Resource Pattern)
-For fetching data, use the resource handler. It tracks loading states so you don't have to create three separate signals manually.
+   For fetching data, use the resource handler. It tracks loading states so you don't have to create three separate signals manually.
 
-
+```typescript
 // stores/userStore.ts
-import { resource, signal } from '@your-org/reactive-signals';
+import { resource, signal } from "nabd";
 
 const userId = signal(1);
 
@@ -63,10 +87,31 @@ export const userResource = resource(async () => {
   return response.json();
 });
 
-export const nextUser = () => userId.update(id => id + 1);
+export const nextUser = () => userId.update((id) => id + 1);
 ```
 
-## 2. Pro-Tips for the Team
+# Fintech Patterns: Optimistic Updates
+
+Nabd makes handling failed transactions easy with withReversion.
+
+```typeScript
+
+import { withReversion, action } from 'nabd';
+
+export const sendMoney = action(async (amount: number) => {
+  balance.update(n => n - amount); // Update UI immediately
+
+  try {
+    await withReversion([balance], async () => {
+      await api.post('/transfer', { amount }); // If this fails, balance rolls back!
+    });
+  } catch (e) {
+    showNotification("Transfer failed, balance restored.");
+  }
+});
+```
+
+# Pro-Tips for the Team
 
 🟢 DO: Use asReadonly
 Always export the readonly version of your signals. This prevents components from doing count.set(999) directly, forcing all state changes to happen through defined Actions.
@@ -92,3 +137,7 @@ effect(() => {
   console.log("[DEBUG] Count changed to:", count.get());
 });
 ```
+
+# License
+
+MIT © akinnez/Nabd

@@ -4,7 +4,7 @@ import { resource } from '../src/handlers/resources';
 describe('Resource Handler', () => {
   it('should handle async lifecycle', async () => {
     const mockFetcher = vi.fn().mockResolvedValue('data');
-    const res = resource(mockFetcher);
+    const res = resource({fetch: mockFetcher});
 
     expect(res.loading.get()).toBe(true);
     
@@ -17,11 +17,11 @@ describe('Resource Handler', () => {
 
   it('should handle errors', async () => {
     const mockFetcher = vi.fn().mockRejectedValue(new Error('Fail'));
-    const res = resource(mockFetcher);
+    const res = resource({fetch: mockFetcher});
 
     await vi.waitFor(() => expect(res.loading.get()).toBe(false));
 
-    expect(res.data.get()).toBe(undefined);
+    expect(res.data.get()).toBe(null);
     expect(res.error.get()).toBeInstanceOf(Error);
   });
 

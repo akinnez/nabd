@@ -1,14 +1,17 @@
 {
-  "name": "@pulse/core",
+  "name": "nabd",
   "version": "1.0.0",
-  "description": "A high-performance reactivity engine for the modern web.",
+  "description": "A lightweight, high-performance reactivity engine designed mostly for Fintech applications. Built for precision, speed, and safety.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "test": "vitest run",
-    "bench": "tsx bench/signals.bench.ts"
+    "bench": "tsx bench/resources.bench.ts"
   },
   "files": [
     "dist",
@@ -26,5 +29,34 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^1.6.1"
-  }
+  },
+
+  "keywords": [
+    "react",
+    "reactivity",
+    "rx",
+    "web",
+    "signals",
+    "nabd",
+    "reversion",
+    "debounce",
+    "debounceSignal",
+    "resources",
+    "useSignal",
+    "useSignalEffect"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akinnez/nabd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akinnez/nabd/issues"
+  },
+  "homepage": "https://github.com/akinnez/nabd#readme",
+
+  "author": "Oladejo Akinola Idris",
+  "contributors": [
+    "Oladejo Akinola Idris (https://github.com/akinnez)"
+  ]
 }
+
