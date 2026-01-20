@@ -21,7 +21,7 @@ yarn add nabd
 
 # Quick Start Guide
 
-1. Create your first "Store"
+## 1. Create your first "Store"
 
 Instead of putting state inside components, create a dedicated file for your domain logic. This makes the state shareable and easy to test.
 
@@ -48,14 +48,15 @@ export const reset = action(() => {
 });
 ```
 
-2. Connect to a React Component
-   Use the useSignal hook to "peek" into the store. React will handle the subscription and unsubscription automatically.
+## 2. Connect to a React Component
+
+Use the useSignal hook to "peek" into the store. React will handle the subscription and unsubscription automatically.
 
 ```typescript
 // components/Counter.tsx
 "use client"; // Required for Next.js App Router
 
-import { useSignal } from "nabd/react";
+import { useSignal } from "nabd";
 import { count, doubleCount, increment } from "../stores/counterStore";
 
 export default function Counter() {
@@ -73,8 +74,9 @@ export default function Counter() {
 }
 ```
 
-3. Handle Async Data (The Resource Pattern)
-   For fetching data, use the resource handler. It tracks loading states so you don't have to create three separate signals manually.
+## 3. Handle Async Data (The Resource Pattern)
+
+For fetching data, use the resource handler. It tracks loading states so you don't have to create three separate signals manually.
 
 ```typescript
 // stores/userStore.ts
@@ -113,13 +115,16 @@ export const sendMoney = action(async (amount: number) => {
 
 # Pro-Tips for the Team
 
-🟢 DO: Use asReadonly
+## 🟢 DO: Use asReadonly
+
 Always export the readonly version of your signals. This prevents components from doing count.set(999) directly, forcing all state changes to happen through defined Actions.
 
-🔴 DON'T: Use Signals for EVERYTHING
+## 🔴 DON'T: Use Signals for EVERYTHING
+
 If a piece of state is only used inside one small component and never shared (like a "isDropdownOpen" toggle), standard useState is perfectly fine. Use Signals for shared state or high-frequency updates.
 
-🟡 WATCH OUT: Destructuring
+## 🟡 WATCH OUT: Destructuring
+
 Do not destructure signals in your component body.
 
 ```typescript
@@ -128,7 +133,8 @@ Do not destructure signals in your component body.
 ✅ const value = useSignal(count);
 ```
 
-🛠️ Debugging with "Effects"
+## 🛠️ Debugging with "Effects"
+
 If you're wondering why a value isn't updating, add a temporary effect in your store file. It will log every change to the console:
 
 ```typeScript
@@ -137,7 +143,3 @@ effect(() => {
   console.log("[DEBUG] Count changed to:", count.get());
 });
 ```
-
-# License
-
-MIT © akinnez/Nabd
