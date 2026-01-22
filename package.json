@@ -1,6 +1,6 @@
 {
   "name": "nabd",
-  "version": "1.0.1",
+  "version": "1.0.2.rc1",
   "description": "A lightweight, high-performance reactivity engine designed mostly for Fintech applications. Built for precision, speed, and safety.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "test": "vitest run",
-    "bench": "tsx bench/resources.bench.ts"
+    "bench": "tsx bench/resources.bench.ts",
+    "publish": "npm run build && npm publish --access public"
   },
   "files": [
     "dist",
