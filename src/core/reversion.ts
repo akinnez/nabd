@@ -17,7 +17,7 @@ export async function withReversion<R>(
     batch(() => {
       signals.forEach((s, i) => s.set(snapshots[i]));
     });
-    console.error("[Pulse] Operation failed. State reverted.", error);
+    console.error("[Nabd] Operation failed. State reverted.", error);
     throw error; // Re-throw so the UI can show an error message
   }
 }

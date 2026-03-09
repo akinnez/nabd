@@ -14,7 +14,7 @@ group('Atomic Operations', () => {
   });
 });
 
-// 2. Propagation Performance (The "Pulse" travel time)
+// 2. Propagation Performance (The "Nabd" travel time)
 group('Dependency Chains', () => {
   bench('Deep Chain (Level 10)', () => {
     const root = signal(0);

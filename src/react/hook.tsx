@@ -10,7 +10,7 @@ export function useSignal<T>(source: AnySignal<T>): T {
   return useSyncExternalStore(
     (cb) => source.subscribe(cb),
     () => source.peek(),
-    () => source.peek()
+    () => source.peek(),
   );
 }
 
