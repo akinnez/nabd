@@ -1,6 +1,6 @@
 {
   "name": "nabd",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A lightweight, high-performance reactivity engine designed mostly for Fintech applications. Built for precision, speed, and safety.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -33,22 +33,30 @@
   },
 
   "keywords": [
+    "web",
     "react",
+    "nextjs",
+    "typescript",
     "reactivity",
     "rx",
-    "web",
-    "signals",
+    "pulse",
     "nabd",
+    "signals",
+    "computed",
+    "effect",
     "reversion",
     "debounce",
     "debounceSignal",
-    "resources",
+    "resource",
+    "resourceApi",
+    "mutation",
+    "action",
     "useSignal",
     "useSignalEffect"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/akinnez/nabd.git"
+    "url": "https://github.com/akinnez/nabd.git"
   },
   "bugs": {
     "url": "https://github.com/akinnez/nabd/issues"
