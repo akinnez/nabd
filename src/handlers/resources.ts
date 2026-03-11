@@ -93,8 +93,7 @@ export function resource<T>(config: {
       } catch (err: any) {
         if (err.name !== "AbortError") {
           _error.set(err);
-          _loading.set(false);
-          _isStale.set(false);
+          console.error(`[Pulse] Resource fetch failed:`, err);
         }
       } finally {
         if (config.cacheKey) inFlightRequests.delete(config.cacheKey);
@@ -168,3 +167,4 @@ export function invalidate(tag: string) {
     subscribers.forEach((refetch) => refetch());
   }
 }
+
