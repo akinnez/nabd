@@ -8,6 +8,31 @@ interface PollingConfig<TResult> {
   isFinal: (res: TResult) => boolean; // Logic to stop polling
 }
 
+/**
+ * 
+ * @param mutationFn 
+ * @param config 
+ * @returns 
+ * 
+ * createPollingAction is a specialized utility designed for scenarios where you need to repeatedly execute an asynchronous operation until a certain condition is met. This is particularly useful for tasks like waiting for a long-running process to complete on the server, where you want to poll for updates at regular intervals. The utility provides built-in state management for tracking the polling status and ensures that only one polling operation can run at a time, preventing race conditions and ensuring a consistent API for handling these types of asynchronous workflows across your application.
+ * 
+ * Example Usage:
+ * const { execute, isPolling } = createPollingAction(async (taskId) => {
+ *   const response = await fetch(`/api/taskStatus/${taskId}`);
+ *   if (!response.ok) throw new Error("Failed to fetch task status");
+ *   return response.json();
+ * }, {
+ *   interval: 5000, // Poll every 5 seconds
+ *   maxAttempts: 10, // Stop after 10 attempts to prevent infinite polling
+ *  isFinal: (res) => res.status === "completed" // Stop polling when task is completed
+ * });
+ * // To start polling:
+ * execute("12345")
+ *   .then(result => console.log("Task completed:", result))
+ *   .catch(err => console.error("Polling failed:", err));
+ 
+ */
+
 export function createPollingAction<TInput, TResult>(
   mutationFn: (data: TInput) => Promise<TResult>,
   config: PollingConfig<TResult>

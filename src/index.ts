@@ -4,3 +4,4 @@ export * from './core/action';
 export * from './handlers/resources';
 export * from './handlers/debounce';
 export * from './react/hook';
+export * from './types/utils';

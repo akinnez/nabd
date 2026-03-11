@@ -105,9 +105,36 @@ export class Effect {
   }
 }
 
+
+/**
+signal: Creates a reactive value that can be read and updated. When the value changes, all dependent Computed and Effect instances are automatically re-evaluated.
+computed: Defines a value that is derived from other signals. It automatically tracks its dependencies and updates when any of them change.
+
+Example Usage:
+const count = signal(0);
+ */
 export const signal = <T>(v: T) => new Signal(v);
+/**
+computed: Defines a value that is derived from other signals. It automatically tracks its dependencies and updates when any of them change.
+Example Usage:
+const count = signal(2);
+const double = computed(() =>  count.get() * 2);
+ */
 export const computed = <T>(fn: () => T) => new Computed(fn);
+/**effect: Runs a side-effectful function that automatically re-runs whenever any of the signals it depends on change. It also supports cleanup functions for managing resources.
+ * Example Usage:
+effect(() => {
+  console.log("Count changed:", count.get());
+});
+ */
 export const effect = (fn: () => void | (() => void)) => new Effect(fn);
+/**batch: Allows multiple signal updates to be grouped together, ensuring that dependent computations only run once after all updates are applied, improving performance in scenarios with multiple changes.
+ * Example Usage:
+batch(() => {
+  count.set(1);
+  double.set(2);
+});
+ */
 export const batch = (fn: () => void) => {
   isBatching = true;
   try { fn(); } 
