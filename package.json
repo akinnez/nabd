@@ -52,7 +52,9 @@
     "mutation",
     "action",
     "useSignal",
-    "useSignalEffect"
+    "useSignalEffect",
+    "linkedSignal",
+    "toSignal"
   ],
   "repository": {
     "type": "git",
