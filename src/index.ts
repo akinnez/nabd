@@ -10,4 +10,5 @@ export * from './utils/pulse';
 export * from './utils/toSignal';
 export * from './utils/linkedSignal';
 export * from './react/hook';
+export * from './middleware/telemetry';
 export * from './types/utils';

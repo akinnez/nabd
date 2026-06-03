@@ -26,7 +26,6 @@ import { createAction } from "./createAction";
  *   .catch(err => console.error("Update failed:", err));
  */
 
-
     export function createMutation<TInput, TResult, TState>(
   targetSignal: Signal<TState>,
   config: {

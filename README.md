@@ -1,14 +1,41 @@
-# 🚀 Nabd Core
+# 🚀 Nabd (v1.1.0) Core
 
-A lightweight, high-performance reactivity engine designed for Fintech applications. Built for precision, speed, and safety.
+## The Heartbeat of High-Performance Fintech UIs.
+
+Nabd is a lightweight, precision-engineered reactivity engine built for developers who can't afford data desync, slow interfaces, or security leaks. Designed with a "security-first" mindset, it provides the primitives needed to build complex financial dashboards with predictable state and bank-grade safety.
+
+# ❓ Why nabd?
+
+In the high-stakes environment of Fintech, generic state management isn't enough. nabd is built to manage the Transaction Lifecycle, not just data variables.
+
+## 🎯 Fine-Grained Precision:
+
+Traditional React state causes "render cascades." Update a single NGN/USD exchange rate, and your entire dashboard re-renders. nabd bypasses this.
+
+## 🛡️ Transactional Integrity:
+
+1. Atomic Action Guards: createAction automatically prevents "Double-Tap" submissions on transfer buttons. No more manual isDisabled state management.
+2. Automatic Reversion: Using withReversion, nabd snapshots your state before an API call. If the network fails, it rolls back the UI to the last "server truth" automatically.
+
+## 📡 Smart Resource Sync:
+
+The resource API acts as a Declarative Mirror of your backend.
+
+1. Reactive Dependencies: Use the on array to link a resource to a search query or user ID. It handles the AbortController and race conditions for you.
+2. Gated Execution: Use enabled to pause API calls until conditions (like a valid BVN or KYC level) are met.
+
+## 🌍 Real-World Telemetry:
+
+Built for markets with fluctuating network speeds. The integrated Telemetry Middleware lets you monitor how much time is spent on PGP encryption versus actual network latency, giving you the data needed to optimize for every user.
 
 # ✨ Features
 
-1.  Fine-Grained Reactivity: Updates only what changes—no more unnecessary re-renders.
-2.  Atomic Transactions: Native action and batch support for consistent state.
-3.  Bank-Grade Safety: Integrated withReversion for atomic optimistic UI rollbacks.
-4.  React Ready: Seamless integration with useSignal and useSyncExternalStore.
-5.  Type Safe: 100% TypeScript with first-class IDE support.
+1.  Fine-Grained Reactivity: Update specific UI nodes (like a wallet balance) without re-rendering entire component trees.
+2.  Bank-Grade Safety: Integrated middleware for PGP encryption, automatic request rollbacks, and atomic action guards.
+3.  Reactive Data Fetching: The resource API synchronizes your UI with your backend using declarative dependency tracking.
+4.  Developer-First Primitives: Includes linkedSignal for smart forms and toSignal for seamless integration with non-reactive data.
+5.  React Ready: Seamless integration with useSignal and useSyncExternalStore.
+6.  Type Safe: 100% TypeScript with first-class IDE support.
 
 # 📦 Installation
 
@@ -21,75 +48,79 @@ yarn add nabd
 
 # Quick Start Guide
 
-## 1. Create your first "Store"
+## 1. Global Configuration (main.ts)
 
-Instead of putting state inside components, create a dedicated file for your domain logic. This makes the state shareable and easy to test.
+Set up your global error handling and security layers once at the root of your app.
 
 ```typescript
-// stores/counterStore.ts
-import { signal, computed, action, asReadonly } from "nabd";
+import { Pulse, telemetryMiddleware } from "nabd";
 
-// 1. Private state (cannot be modified outside this file)
-const _count = signal(0);
-
-// 2. Public Read-only view
-export const count = asReadonly(_count);
-
-// 3. Derived state (Automatic)
-export const doubleCount = computed(() => _count.get() * 2);
-
-// 4. Actions (Logic with automatic batching)
-export const increment = action(() => {
-  _count.update((n) => n + 1);
-});
-
-export const reset = action(() => {
-  _count.set(0);
+Pulse.configure({
+  middleware: [
+    telemetryMiddleware(), // You can also use any telemetry of choice
+    {
+      onError: (err) => {
+        if (err.status === 401) handleLogout();
+        toast.error(err.message);
+      },
+    },
+  ],
 });
 ```
 
-## 2. Connect to a React Component
+## 2. Define Your Store
+
+```typescript
+import { resource, signal, computed } from "nabd";
+
+export const currency = signal("NGN");
+export const balance = resource({
+  on: [currency],
+  fetch: (abort) => api.get(`/wallet/balance?ccy=${currency.get()}`, { abort }),
+  cacheKey: "user-balance",
+});
+```
+
+## 3. Create a simple reusable component (React Bridge)
+
+```typescript
+import {useSignal, AnySignal  } from "nabd";
+
+interface TextProps {
+  signal: AnySignal<string | number>;
+  className?: string;
+}
+
+/**
+ * A fine-grained component that subscribes to a signal.
+ * Only THIS component re-renders when the signal changes.
+ */
+export function Text({ signal, className }: TextProps) {
+  const value = useSignal(signal);
+  return <span className={className}>{value}</span>;
+}
+```
+
+## 4. Connect to a React Component
 
 Use the useSignal hook to "peek" into the store. React will handle the subscription and unsubscription automatically.
 
 ```typescript
-// components/Counter.tsx
-"use client"; // Required for Next.js App Router
+import { Text, useSignal, computed } from 'nabd';
+import { Text } from '../your-component';
 
-import { useSignal } from "nabd";
-import { count, doubleCount, increment } from "../stores/counterStore";
-
-export default function Counter() {
-  // Component re-renders ONLY when count changes
-  const c = useSignal(count);
-  const dc = useSignal(doubleCount);
+function Dashboard() {
+  // Only re-renders if the whole profile object changes
+  const data = useSignal(balance.data);
 
   return (
-    <div className="card">
-      <h1>Count: {c}</h1>
-      <h2>Double: {dc}</h2>
-      <button onClick={increment}>Add +1</button>
+    <div>
+      {/* Fine-grained: Bypasses component render to update just this span */}
+      <h1>Balance: <Text signal={computed(() => `₦${data?.amount}`)} /></h1>
+      <button onClick={() => currency.set('USD')}>Switch to USD</button>
     </div>
   );
 }
-```
-
-## 3. Handle Async Data (The Resource Pattern)
-
-For fetching data, use the resource handler. It tracks loading states so you don't have to create three separate signals manually.
-
-```typescript
-// stores/userStore.ts
-import { resource, signal } from "nabd";
-
-const userId = signal(1);
-
-export const userResource = resource(async () => {
-  const response = await fetch(`https://api.example.com/user/${userId.get()}`);
-  return response.json();
-});
-
-export const nextUser = () => userId.update((id) => id + 1);
 ```
 
 # Fintech Patterns: Optimistic Updates
@@ -111,6 +142,48 @@ export const sendMoney = action(async (amount: number) => {
     showNotification("Transfer failed, balance restored.");
   }
 });
+```
+
+# 🧬 Core API Reference
+
+## resource(config)
+
+The primary engine for GET requests. It manages its own loading, error, and data states.
+
+### on:
+
+Array of signals to watch for re-fetching.
+
+### enabled:
+
+A gate to pause/resume the resource.
+
+## createAction(fn, config)
+
+The engine for mutations (POST/PATCH/DELETE).
+
+### atomic:
+
+Prevents concurrent execution of the same action.
+
+### withReversion:
+
+Automatically snapshots state to rollback if the API fails.
+
+## linkedSignal(source)
+
+A writable signal that "follows" a source getter but allows manual local overrides—perfect for edit forms.
+
+## toSignal(value)
+
+The "Swiss Army Knife" for reactivity. Converts primitives, functions, or existing signals into a standardized reactive format.
+
+# 📈 Performance Benchmarks
+
+nabd is built for speed. Using mitata, we ensure our signal propagation and resource synchronization are optimized for low-latency environments.
+
+```Bash
+npm run bench
 ```
 
 # Pro-Tips for the Team

@@ -9,6 +9,8 @@ const inFlightRequests = new Map<string, Promise<any>>();
 const tagRegistry = new Map<string, Set<any>>();
 const DEFAULT_TTL = 5 * 60 * 1000;
 
+let scheduled = false;
+
 const read = <T>(s: any): T => {
   if (s && typeof s === "object" && typeof s.get === "function") {
     return s.get();
@@ -44,9 +46,9 @@ export function resource<T>(config: {
    * fetch function that receives an AbortSignal for cancellation. Should return a Promise that resolves with the data.
    * Example:
    * fetch: (signal) => fetch("/api/data", { signal }).then(res => res.json())
-   * 
-   * @param signal 
-   * @returns 
+   *
+   * @param signal
+   * @returns
    */
   fetch: (signal: AbortSignal) => Promise<T>;
   /**
@@ -66,14 +68,14 @@ export function resource<T>(config: {
    */
   retryCount?: number;
 
-/**
- * [Optional] tags for grouping resources. Useful for invalidation after mutations. For example, if you have a resource that fetches user data, you might tag it with "user_profile". Then, after a mutation that updates the user profile, you can call invalidate("user_profile") to automatically refetch all resources with that tag.
- * Example:
- * tags: ["user_profile", "dashboard_data"] // This resource belongs to both "user_profile" and "dashboard_data" groups
- * invalidate("user_profile") would refetch this resource, while invalidate("dashboard_data") would also refetch it. This allows for flexible and efficient cache management across related resources.
- * 
- * Note: If you use tags, make sure to call invalidate with the appropriate tag after performing mutations that affect the data. This ensures that your UI stays in sync with the latest state without manual refetching.
- */
+  /**
+   * [Optional] tags for grouping resources. Useful for invalidation after mutations. For example, if you have a resource that fetches user data, you might tag it with "user_profile". Then, after a mutation that updates the user profile, you can call invalidate("user_profile") to automatically refetch all resources with that tag.
+   * Example:
+   * tags: ["user_profile", "dashboard_data"] // This resource belongs to both "user_profile" and "dashboard_data" groups
+   * invalidate("user_profile") would refetch this resource, while invalidate("dashboard_data") would also refetch it. This allows for flexible and efficient cache management across related resources.
+   *
+   * Note: If you use tags, make sure to call invalidate with the appropriate tag after performing mutations that affect the data. This ensures that your UI stays in sync with the latest state without manual refetching.
+   */
   tags?: string[];
   /**
    * [Optional] dependencies that trigger a refetch when they change. Can be an array of Signals or Computeds. Useful for dynamic resources that depend on other reactive values.
@@ -88,13 +90,13 @@ export function resource<T>(config: {
    * Example:
    * ttl: 2 * 60 * 1000 // Cache expires after 2 minutes
    * This allows you to control how long the cached data should be considered valid, ensuring that your application doesn't serve stale data for too long while still benefiting from caching for frequently accessed resources.
-   * 
+   *
    */
   ttl?: number;
   /**
    * [Optional] Middleware for this specific resource instance. This allows you to apply transformations or side effects to the fetch process without affecting global middleware. For example, you could use onBefore to modify the request parameters, onSuccess to log the result, or onError to send error reports.
    * Example:
-   * options: { 
+   * options: {
    * middleware: [
    *  {
    *   onBefore: (data) => { console.log("Fetching resource with data:", data); },
@@ -103,7 +105,7 @@ export function resource<T>(config: {
    * ] }
    * This would log messages before and after the fetch operation for this specific resource, without affecting other resources that don't use this middleware. This is particularly useful for adding instance-specific logging, error handling, or data transformations while keeping the global middleware clean and reusable across multiple resources.
    */
-  options?: { middleware?: PulseMiddleware<any, any>[] }
+  options?: { middleware?: PulseMiddleware<any, any>[] };
 }): {
   data: Signal<T | null>;
   loading: Signal<boolean>;
@@ -117,7 +119,8 @@ export function resource<T>(config: {
   const _isStale = signal(false);
   const _error = signal<any>(null);
 
-  const key = read<string>(config.cacheKey);
+  const getKey = () => read<string>(config.cacheKey);
+
   const unsubs: Array<() => void> = [];
   let abortController: AbortController | null = null;
 
@@ -148,17 +151,20 @@ export function resource<T>(config: {
       if (!tagRegistry.has(tag)) {
         tagRegistry.set(tag, new Set());
       }
-
-      tagRegistry.get(tag)!.add(refetch);
+      tagRegistry.get(tag)!.add(instance);
+      instance.refetch();
     });
   };
 
   const refetch = async () => {
+    const currentKey = getKey();
+
     // SOLUTION: Lazy Gating - Don't fetch if disabled (e.g., Modal is closed)
-    if (config.enabled && !read<boolean>(config.enabled)) return;
+    const isEnabled = config.enabled ? read<boolean>(config.enabled) : true;
+    if (!isEnabled && !_data.get()) return;
 
     const now = Date.now();
-    const cached = config.cacheKey ? resourceCache.get(key) : null;
+    const cached = config.cacheKey ? resourceCache.get(getKey()) : null;
     const isExpired = cached
       ? now - cached.timestamp > (config.ttl ?? DEFAULT_TTL)
       : true;
@@ -171,9 +177,10 @@ export function resource<T>(config: {
     }
 
     // 2. DEDUPLICATION
-    if (key && inFlightRequests.has(key)) {
-      _data.set(await inFlightRequests.get(key));
-      return;
+    if (getKey() && inFlightRequests.has(getKey())) {
+      const result = await inFlightRequests.get(getKey());
+      _data.set(result);
+      return result;
     }
 
     if (abortController) abortController.abort();
@@ -181,50 +188,61 @@ export function resource<T>(config: {
 
     const flight = (async () => {
       _loading.set(true);
+      const ctx = { key: getKey() };
 
-      allMiddleware.forEach(m => m.onBefore?.(null));
+      allMiddleware.forEach((m) => m.onBefore?.(ctx));
 
       try {
         const result = await fetchWithRetry(abortController!.signal);
-        allMiddleware.forEach(m => m.onSuccess?.(result, null));
+        if (getKey() !== currentKey) return result; // Optional: Prevent out-of-order responses from overwriting newer data
 
+        allMiddleware.forEach((m) => m.onSuccess?.(result, null));
         _data.set(result);
-        if (key) {
-          resourceCache.set(key, {
+        if (getKey()) {
+          resourceCache.set(getKey(), {
             data: result,
             timestamp: Date.now(),
           });
         }
-        _data.set(result);
+        _error.set(null);
         return result;
       } catch (err: any) {
-        allMiddleware.forEach(m => m.onError?.(err, null));
+        allMiddleware.forEach((m) => m.onError?.(err, _data.peek()));
         if (err.name !== "AbortError") {
           _error.set(err);
           console.error(`[Pulse] Resource fetch failed:`, err);
         }
       } finally {
-        if (key) inFlightRequests.delete(key);
+        if (getKey()) inFlightRequests.delete(getKey());
         _loading.set(false);
         _isStale.set(false);
       }
     })();
 
-    if (key) inFlightRequests.set(key, flight);
+    if (getKey()) inFlightRequests.set(getKey(), flight);
+  };
+
+  const trigger = () => {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      refetch();
+    });
   };
 
   // --- SUBSCRIPTION MANAGEMENT ---
   const setupSubscriptions = () => {
     // Listen to dependencies
     if (config.on) {
-      config.on.forEach((dep) => unsubs.push(dep.subscribe(() => refetch())));
+      config.on.forEach((dep) => unsubs.push(dep.subscribe(trigger)));
     }
     // Listen to enabled gate
 
     if (config.enabled && typeof config.enabled !== "boolean") {
       const unsub = config.enabled.subscribe(() => {
         // Since nabd subscribe doesn't always pass the value, read it manually
-        if (read<boolean>(config.enabled) && !_data.get()) {
+        if (read<boolean>(config.enabled)) {
           refetch();
         }
       });

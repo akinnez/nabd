@@ -1,7 +1,7 @@
 {
   "name": "nabd",
   "version": "1.1.0",
-  "description": "A lightweight, high-performance reactivity engine designed mostly for Fintech applications. Built for precision, speed, and safety.",
+  "description": "A lightweight, high-performance reactivity engine for Fintech. Built for predictable state, precision speed, and bank-grade safety.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

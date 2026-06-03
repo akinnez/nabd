@@ -67,6 +67,8 @@ describe("Pulse V5 Resource Engine", () => {
     // Call two resources with the same key at the same time
     const res1 = resource({ fetch: mockFetcher, cacheKey: "dup-test" });
     const res2 = resource({ fetch: mockFetcher, cacheKey: "dup-test" });
+    const res4 = resource({ fetch: mockFetcher, cacheKey: "dup-test" });
+    const res3 = resource({ fetch: mockFetcher, cacheKey: "dup-test" });
 
     await vi.waitFor(() => expect(res1.loading.get()).toBe(false));
 
@@ -74,5 +76,7 @@ describe("Pulse V5 Resource Engine", () => {
     expect(mockFetcher).toHaveBeenCalledTimes(1);
     expect(res1.data.get()).toBe("done");
     expect(res2.data.get()).toBe("done");
+    expect(res3.data.get()).toBe("done");
+    expect(res4.data.get()).toBe("done");
   });
 });
