@@ -23,13 +23,13 @@
     "react": ">=18"
   },
   "devDependencies": {
-    "@types/node": "^25.0.9",
-    "@types/react": "^19.2.8",
-    "mitata": "^0.1.14",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.17",
+    "mitata": "^1.0.34",
     "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
 
   "keywords": [
